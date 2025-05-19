@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Category;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Collections\Criteria;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -43,13 +44,12 @@ class CategoryRepository extends ServiceEntityRepository
      */
     public function search(string $term): array
     {
-        $qb = $this->createQueryBuilder('category')
-        ->addSelect('fortune')
-        ->leftJoin('category.fortuneCookies', 'fortune')
-        ->andWhere('category.name LIKE :term OR category.iconKey LIKE :term OR fortune.fortune LIKE :term')
+        $qb = $this->addOrderByCategoryName();
+
+        $qb = $this->addFortuneCookieJoinAndSelect($qb)
+        ->andWhere('category.name LIKE :term OR category.iconKey LIKE :term OR fortuneCookie.fortune LIKE :term')
         // ->orWhere('category.iconKey LIKE :term')
-        ->setParameter('term', '%' . $term . '%')
-        ->addOrderBy('category.name', 'ASC');
+        ->setParameter('term', '%' . $term . '%');
 
         $query = $qb->getQuery();
         return $query->getResult();
@@ -57,13 +57,24 @@ class CategoryRepository extends ServiceEntityRepository
 
     function findWithFortuneCookies(int $id): ?Category
     {
-        $qb = $this->createQueryBuilder('category')
-            ->addSelect('fortune')
-            ->leftJoin('category.fortuneCookies', 'fortune')
+        return $this->addFortuneCookieJoinAndSelect()
             ->andWhere('category.id = :id')
-            ->setParameter('id', $id);
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 
-        return $qb->getQuery()->getOneOrNullResult();
+    function addFortuneCookieJoinAndSelect(?QueryBuilder $qb = null): QueryBuilder
+    {
+        return ($qb ?? $this->createQueryBuilder('category'))
+            ->addSelect('fortuneCookie')
+            ->leftJoin('category.fortuneCookies', 'fortuneCookie');
+    }
+
+    function addOrderByCategoryName(?QueryBuilder $qb = null): QueryBuilder
+    {
+        return ($qb ?? $this->createQueryBuilder('category'))
+            ->orderBy('category.name', Criteria::ASC);
     }
 
     public function save(Category $entity, bool $flush = false): void
