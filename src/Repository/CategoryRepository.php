@@ -38,6 +38,21 @@ class CategoryRepository extends ServiceEntityRepository
         return $query->getResult();
     }
 
+    /**
+     * @return Category[]
+     */
+    public function search(string $term): array
+    {
+        $qb = $this->createQueryBuilder('category')
+        ->andWhere('category.name LIKE :term OR category.iconKey LIKE :term')
+        // ->orWhere('category.iconKey LIKE :term')
+        ->setParameter('term', '%' . $term . '%')
+        ->addOrderBy('category.name', 'ASC');
+
+        $query = $qb->getQuery();
+        return $query->getResult();
+    }
+
     public function save(Category $entity, bool $flush = false): void
     {
         $this->getEntityManager()->persist($entity);
