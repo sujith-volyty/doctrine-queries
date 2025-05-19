@@ -55,6 +55,17 @@ class CategoryRepository extends ServiceEntityRepository
         return $query->getResult();
     }
 
+    function findWithFortuneCookies(int $id): ?Category
+    {
+        $qb = $this->createQueryBuilder('category')
+            ->addSelect('fortune')
+            ->leftJoin('category.fortuneCookies', 'fortune')
+            ->andWhere('category.id = :id')
+            ->setParameter('id', $id);
+
+        return $qb->getQuery()->getOneOrNullResult();
+    }
+
     public function save(Category $entity, bool $flush = false): void
     {
         $this->getEntityManager()->persist($entity);
