@@ -24,20 +24,30 @@ class FortuneCookieRepository extends ServiceEntityRepository
     }
 
     public function countNumberPrintedForCategory(Category $category): CategoryFortuneStats {
-        return $this->createQueryBuilder('f')
-            ->select(sprintf(
-                'NEW %s(
-                    SUM(f.numberPrinted),
-                    AVG(f.numberPrinted),
-                    category.name
-                )',
-                CategoryFortuneStats::class
-            ))
-            ->innerJoin('f.category', 'category')
-            ->where('f.category = :category')
-            ->setParameter('category', $category)
-            ->getQuery()
-            ->getSingleResult();
+        // return $this->createQueryBuilder('f')
+        //     ->select(sprintf(
+        //         'NEW %s(
+        //             SUM(f.numberPrinted),
+        //             AVG(f.numberPrinted),
+        //             category.name
+        //         )',
+        //         CategoryFortuneStats::class
+        //     ))
+        //     ->innerJoin('f.category', 'category')
+        //     ->where('f.category = :category')
+        //     ->setParameter('category', $category)
+        //     ->getQuery()
+        //     ->getSingleResult();
+
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = 'SELECT SUM(fortune_cookie.number_printed) AS numberPrinted, AVG(fortune_cookie.number_printed) averagePrinted, category.name AS categoryName FROM fortune_cookie INNER JOIN category ON category.id = fortune_cookie.category_id WHERE fortune_cookie.category_id = :category';
+        $stmt = $conn->prepare($sql);
+        $stmt->bindValue('category', $category->getId());
+        $result = $stmt->executeQuery();
+
+        return new CategoryFortuneStats(
+            ...$result->fetchAssociative()
+        );
     }
 
     public function save(FortuneCookie $entity, bool $flush = false): void
