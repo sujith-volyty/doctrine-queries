@@ -21,6 +21,17 @@ class CategoryRepository extends ServiceEntityRepository
         parent::__construct($registry, Category::class);
     }
 
+    /**
+     * @return Category[]
+     */
+    public function findAllOrdered(): array
+    {
+        $dql = "SELECT category FROM App\Entity\Category category ORDER BY category.name ASC";
+        $query = $this->getEntityManager()->createQuery($dql);
+        // dd($query->getSQL());
+        return $query->getResult();
+    }
+
     public function save(Category $entity, bool $flush = false): void
     {
         $this->getEntityManager()->persist($entity);
