@@ -2,7 +2,6 @@
 
 namespace App\Controller;
 
-use App\Entity\Category;
 use App\Repository\CategoryRepository;
 use App\Repository\FortuneCookieRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -31,7 +30,7 @@ class FortuneController extends AbstractController
     #[Route('/category/{id}', name: 'app_category_show')]
     public function showCategory(int $id, CategoryRepository $categoryRepository, FortuneCookieRepository $fortuneCookieRepository): Response
     {
-        $category = $categoryRepository->findWithFortuneCookies($id);
+        $category = $categoryRepository->find($id);
 
         if (!$category) {
             throw $this->createNotFoundException('Category not found');
