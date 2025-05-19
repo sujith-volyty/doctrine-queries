@@ -30,7 +30,7 @@ class CategoryRepository extends ServiceEntityRepository
     {
         // $dql = "SELECT category FROM App\Entity\Category category ORDER BY category.name ASC";
 
-        $qb = $this->createQueryBuilder('category');
+        $qb = $this->addGroupByCategory();
         $qb->orderBy('category.name', Criteria::ASC);
         $query = $qb->getQuery();
 
@@ -46,7 +46,7 @@ class CategoryRepository extends ServiceEntityRepository
     {
         $qb = $this->addOrderByCategoryName();
 
-        $qb = $this->addFortuneCookieJoinAndSelect($qb)
+        $qb = $this->addGroupByCategory($qb)
         ->andWhere('category.name LIKE :term OR category.iconKey LIKE :term OR fortuneCookie.fortune LIKE :term')
         // ->orWhere('category.iconKey LIKE :term')
         ->setParameter('term', '%' . $term . '%');
@@ -63,6 +63,14 @@ class CategoryRepository extends ServiceEntityRepository
             ->orderBy('RAND()', Criteria::ASC)
             ->getQuery()
             ->getOneOrNullResult();
+    }
+
+    private function addGroupByCategory(?QueryBuilder $qb = null): QueryBuilder
+    {
+        return ($qb ?? $this->createQueryBuilder('category'))
+            ->addSelect('COUNT(fortuneCookie.id) AS fortuneCookiesTotal')
+            ->leftJoin('category.fortuneCookies', 'fortuneCookie')
+            ->addGroupBy('category.id');
     }
 
     function addFortuneCookieJoinAndSelect(?QueryBuilder $qb = null): QueryBuilder
